@@ -110,7 +110,7 @@ class CCI_SM_025Img(ImageBase):
             return Image(self.grid.activearrlon, self.grid.activearrlat,
                          return_img, return_metadata, timestamp)
         else:
-            yres, xres = self.grid.shape
+            xres, yres = self.grid.shape
             for key in return_img:
                 return_img[key] = return_img[key].reshape((xres, yres))
 
@@ -145,7 +145,8 @@ class CCI_SM_025Ds(MultiTemporalImageBase):
         If set then the data is read into 1D arrays. Needed for some legacy code.
     """
 
-    def __init__(self, data_path, parameter=None, subgrid=None, array_1D=False):
+    def __init__(self, data_path, parameter=None, subgrid=None, array_1D=False,
+                 datetime_format="%Y%m%d%H%M%S"):
 
         ioclass_kws = {'parameter': parameter,
                        'subgrid': subgrid,
@@ -155,7 +156,7 @@ class CCI_SM_025Ds(MultiTemporalImageBase):
         filename_templ = "ESACCI-SOILMOISTURE-L3S-*-{datetime}-fv*.nc"
         super(CCI_SM_025Ds, self).__init__(data_path, CCI_SM_025Img,
                                                   fname_templ=filename_templ,
-                                                  datetime_format="%Y%m%d%H%M%S",
+                                                  datetime_format=datetime_format,
                                                   subpath_templ=sub_path,
                                                   exact_templ=False,
                                                   ioclass_kws=ioclass_kws)
@@ -226,4 +227,11 @@ class CCITs(GriddedNcOrthoMultiTs):
         grid = load_grid(grid_path)
         super(CCITs, self).__init__(ts_path, grid, **kwargs)
 
-
+if __name__ == '__main__':
+    from datetime import datetime
+    import matplotlib.pyplot as plt
+    path = r"R:\Projects\CCIplus_Soil_Moisture\07_data\ESA_CCI_SM_v06.0\060_daily_images\combined"
+    ds = CCI_SM_025Ds(path, array_1D=False)
+    img = ds.read(datetime(2007,1,10))
+    plt.imshow(img.data['sm'])
+    plt.show()

@@ -36,7 +36,6 @@ from datetime import datetime
 from repurpose.img2ts import Img2Ts
 from esa_cci_sm.interface import CCI_SM_025Ds
 from esa_cci_sm.grid import CCILandGrid, CCICellGrid
-from pygeogrids.grids import BasicGrid
 
 import configparser
 
@@ -77,7 +76,7 @@ def parse_filename(data_dir):
         Names of parameters in the first detected file
     '''
     template = '{product}-SOILMOISTURE-L3S-{data_type}-{sensor_type}-' \
-               '{datetime}000000-fv{version}.{sub_version}.nc'
+               '{datetime}-fv{version}.{sub_version}.nc'
 
     for curr, subdirs, files in os.walk(data_dir):
         for f in files:
@@ -191,8 +190,11 @@ def reshuffle(input_root, outputpath,
     if parameters is None:
         parameters = [p for p in file_vars if p not in ['lat', 'lon', 'time']]
 
+    datetime_format = "%Y%m%d%H%M%S"
+
     input_dataset = CCI_SM_025Ds(data_path=input_root, parameter=parameters,
-                                 subgrid=grid, array_1D=True)
+                                 subgrid=grid, array_1D=True,
+                                 datetime_format=datetime_format)
 
     if not ignore_meta:
         global_attr, ts_attributes = read_metadata(sensortype=file_args['sensor_type'],
@@ -203,8 +205,6 @@ def reshuffle(input_root, outputpath,
     else:
         global_attr = {'product' : 'ESA CCI SM'}
         ts_attributes = None
-
-
     reshuffler = Img2Ts(input_dataset=input_dataset, outputpath=outputpath,
                         startdate=startdate, enddate=enddate, input_grid=grid,
                         imgbuffer=imgbuffer, cellsize_lat=5.0, cellsize_lon=5.0,
@@ -276,6 +276,12 @@ def main(args):
 
 def run():
     main(sys.argv[1:])
+
+if __name__ == '__main__':
+    input_root = r"R:\Projects\CCIplus_Soil_Moisture\07_data\ESA_CCI_SM_v06.0\060_daily_images\combined"
+    output_path = r"C:\Temp\delete_me\ts"
+    start_date, end_date = datetime(2000,1,1), datetime(2000,1,31)
+    reshuffle(input_root, output_path, start_date, end_date, land_points=True)
 
 
 
